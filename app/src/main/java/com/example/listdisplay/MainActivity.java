@@ -5,6 +5,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -23,27 +24,33 @@ import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
 
-    ArrayAdapter adapter;
+    AlbumAdapter adapter;
+    ListView listView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        adapter = new ArrayAdapter<String>(this,
-                R.layout.activity_listview);
+        adapter = new AlbumAdapter(this);
 
-        ListView listView = (ListView) findViewById(R.id.mobile_list);
+        listView = (ListView) findViewById(R.id.mobile_list);
         listView.setAdapter(adapter);
-
-        GetAlbumsTask task = new GetAlbumsTask();
-        task.execute();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);//Menu Resource, Menu
+
+        return true;
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.get_albums) {
+            GetAlbumsTask task = new GetAlbumsTask();
+            task.execute();
+        }
 
         return true;
     }
@@ -134,9 +141,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         protected void onPostExecute(String[] albums) {
-            adapter.clear();
+            adapter.setDataSource(albums);
 
-            adapter.addAll(albums);
+            listView.invalidateViews();
         }
     }
 
