@@ -5,10 +5,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -21,21 +24,18 @@ import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
 
-    ArrayAdapter adapter;
+    AlbumAdapter adapter;
+    ListView listView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        adapter = new ArrayAdapter<String>(this,
-                R.layout.activity_listview);
+        adapter = new AlbumAdapter(this);
 
-        ListView listView = (ListView) findViewById(R.id.mobile_list);
+        listView = (ListView) findViewById(R.id.mobile_list);
         listView.setAdapter(adapter);
-
-        GetAlbumsTask task = new GetAlbumsTask();
-        task.execute();
     }
 
     @Override
@@ -46,21 +46,28 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.get_albums) {
+            GetAlbumsTask task = new GetAlbumsTask();
+            task.execute();
+        }
+
+        return true;
+    }
+
     private class GetAlbumsTask extends AsyncTask<Void, Void, String[]> {
 
         protected String[] doInBackground(Void... voids) {
-            // Array of strings...
-            String[] albumArray = {"Android", "IPhone", "WindowsMobile", "Blackberry",
-                    "WebOS", "Ubuntu", "Windows7", "Max OS X"};
-
             String albumJsonStr = null;
 
-            // These two need to be declared outside the try/catch
-            // so that they can be closed in the finally block.
+            // Get JSON from REST API
+
             HttpURLConnection urlConnection = null;
 
             try {
                 final String baseUrl = "http://jsonplaceholder.typicode.com/albums";
+
+                // Get input stream
 
                 URL url = new URL(baseUrl);
 
@@ -68,15 +75,15 @@ public class MainActivity extends AppCompatActivity {
                 urlConnection.setRequestMethod("GET");
                 urlConnection.connect();
 
-                // Read the input stream into a String
-
                 InputStream inputStream = urlConnection.getInputStream();
                 if (inputStream == null) {
                     // Nothing to do.
                     return null;
                 }
 
-                StringBuffer buffer = new StringBuffer();
+                // Extract JSON string from input stream
+
+                /*StringBuffer buffer = new StringBuffer();
 
                 BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
                 try {
@@ -94,7 +101,18 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
 
-                albumJsonStr = buffer.toString();
+                albumJsonStr = buffer.toString();*/
+
+                StringBuilder out = new StringBuilder();
+                InputStreamReader in = new InputStreamReader(inputStream, "UTF-8");
+
+                char[] buffer = new char[1024];
+                int rsz;
+                while ((rsz = in.read(buffer, 0, buffer.length)) >= 0) {
+                    out.append(buffer, 0, rsz);
+                }
+
+                albumJsonStr = out.toString();
             } catch (IOException e) {
                 return null;
             } finally {
@@ -103,20 +121,29 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            Log.d("XKAL", albumJsonStr);
+            // Turn JSON to Array of Strings
 
-            ////return getWeatherDataFromJson(forecastJsonStr, numDays);
-            return albumArray;
+            try {
+                JSONArray albumJsonArray = new JSONArray(albumJsonStr);
 
+                String[] albumArray = new String[albumJsonArray.length()];
 
-            // This will only happen if there was an error getting or parsing the forecast.
-            ////return null;
+                for (int i = 0; i < albumJsonArray.length(); i++) {
+                    JSONObject albumJson = (JSONObject) albumJsonArray.get(i);
+
+                    albumArray[i] = albumJson.getString("title");
+                }
+
+                return albumArray;
+            } catch (JSONException e) {
+                return null;
+            }
         }
 
         protected void onPostExecute(String[] albums) {
-            adapter.clear();
+            adapter.setDataSource(albums);
 
-            adapter.addAll(albums);
+            listView.invalidateViews();
         }
     }
 
