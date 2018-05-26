@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        adapter = new AlbumAdapter(this);
+        adapter = new AlbumAdapter(this, 0);
 
         listView = (ListView) findViewById(R.id.mobile_list);
         listView.setAdapter(adapter);
@@ -55,9 +55,9 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    private class GetAlbumsTask extends AsyncTask<Void, Void, String[]> {
+    private class GetAlbumsTask extends AsyncTask<Void, Void, Album[]> {
 
-        protected String[] doInBackground(Void... voids) {
+        protected Album[] doInBackground(Void... voids) {
             String albumJsonStr = null;
 
             // Get JSON from REST API
@@ -126,12 +126,14 @@ public class MainActivity extends AppCompatActivity {
             try {
                 JSONArray albumJsonArray = new JSONArray(albumJsonStr);
 
-                String[] albumArray = new String[albumJsonArray.length()];
+                Album[] albumArray = new Album[albumJsonArray.length()];
 
                 for (int i = 0; i < albumJsonArray.length(); i++) {
                     JSONObject albumJson = (JSONObject) albumJsonArray.get(i);
 
-                    albumArray[i] = albumJson.getString("title");
+                    Album album = new Album();
+                    album.setTitle(albumJson.getString("title"));
+                    albumArray[i] = album;
                 }
 
                 return albumArray;
@@ -140,10 +142,14 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        protected void onPostExecute(String[] albums) {
-            adapter.setDataSource(albums);
+        protected void onPostExecute(Album[] albums) {
+            if (albums != null) {
+                adapter.clear();
 
-            listView.invalidateViews();
+                for (Album album : albums) {
+                    adapter.add(album);
+                }
+            }
         }
     }
 

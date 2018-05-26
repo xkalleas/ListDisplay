@@ -1,71 +1,51 @@
 package com.example.listdisplay;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-public class AlbumAdapter extends BaseAdapter {
+public class AlbumAdapter extends ArrayAdapter<Album> {
 
     private Context mContext;
-    private LayoutInflater mInflater;
-    private String[] mDataSource = null;
 
-    public AlbumAdapter(Context context) {
-        mContext = context;
-        mInflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-    }
+    public AlbumAdapter(@NonNull Context context,
+                          int resource) {
+        super(context, resource);
 
-    public void setDataSource(String[] items) {
-        mDataSource = items;
-    }
-
-    @Override
-    public int getCount() {
-        if (mDataSource == null) {
-            return 0;
-        }
-        else {
-            return mDataSource.length;
-        }
-    }
-
-    @Override
-    public Object getItem(int position) {
-        if (mDataSource == null) {
-            return null;
-        }
-        else {
-            return mDataSource[position];
-        }
-    }
-
-    @Override
-    public long getItemId(int position) {
-        return position;
+        this.mContext = context;
     }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        // Get view for row item
-        View rowView = mInflater.inflate(R.layout.list_item_album, parent, false);
+
+        if(convertView == null) {
+            convertView = LayoutInflater
+                    .from(mContext)
+                    .inflate(R.layout.list_item_album,
+                            parent,
+                            false);
+        }
+
 
         // Get title element
         TextView titleTextView =
-                (TextView) rowView.findViewById(R.id.album_list_title);
+                (TextView) convertView.findViewById(R.id.album_list_title);
 
         // Get thumbnail element
         ImageView thumbnailImageView =
-                (ImageView) rowView.findViewById(R.id.album_list_thumbnail);
+                (ImageView) convertView.findViewById(R.id.album_list_thumbnail);
 
-        String album = (String) getItem(position);
+        Album album = (Album) getItem(position);
 
-        titleTextView.setText(album);
+        titleTextView.setText(album.getTitle());
         thumbnailImageView.setImageResource(R.mipmap.ic_launcher);
 
-        return rowView;
+        return convertView;
     }
 }
